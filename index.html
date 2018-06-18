@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="style.css">
+    <title>to do list</title>
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+</head>
+<body>
+<div id="program"></div>
+
+<script type="text/babel">
+    let txtdetail=[];
+    let date=[]; let datefor =[];
+    let time=[]; let timefor =[];
+    let now = new Date();
+    let nowDate = [];
+    if(localStorage.getItem('detail') !== null) txtdetail=JSON.parse(localStorage.getItem("detail"));
+    if(localStorage.getItem('date') !== null) date=JSON.parse(localStorage.getItem("date"));
+    if(localStorage.getItem('time') !== null) time=JSON.parse(localStorage.getItem("time"));
+    if(localStorage.getItem('nowDate') !== null) nowDate=JSON.parse(localStorage.getItem('nowDate'));
+
+    class Task extends React.Component {
+
+        constructor(props){
+            super(props);
+            this.state ={
+                edit: false,
+                detail: false,
+                compl:false,
+                check: 3
+            };
+        };
+        edit=()=>{
+            this.setState({edit: true});
+        };
+        remove=()=>{
+            this.props.deleteBlock(this.props.index);
+            this.state.compl=false;
+        };
+        detail=()=>{
+            this.setState({detail: true});
+        };
+        backToMenu=()=>{
+            this.setState({detail: false});
+        };
+        save=()=>{
+           this.props.update(this.refs.newTxt.value, this.refs.newTxt2.value, this.refs.date.value, this.refs.time.value, this.props.index);
+           this.setState({edit: false});
+        };
+        isChecked=()=>{
+            if(this.state.check == 0) return(<div>хуй</div>);
+            else if(this.state.check == 1) return(<div>пизда</div>);
+            else if(this.state.check == 2) return(<div>туз</div>);
+            else  return(<div>малафья</div>);
+        };
+
+        dateProof=()=>{
+            if(typeof date[this.props.index]!='undefined') {
+                let arrD = date[this.props.index].split("-");
+                let arrT = [];
+                if (time[this.props.index] != '') arrT = time[this.props.index].split(":");
+                else {
+                    arrT[0] = 0;
+                    arrT[1] = 0;
+                }
+                ;
+                arrD[1] -= 1;
+                var d = new Date(arrD[0], arrD[1], arrD[2], arrT[0], arrT[1]);
+                if (d < now) return true;
+                else return false;
+            }else return false;
+        };
+        Iscomplete=()=>{
+            this.setState({compl: true});
+            localStorage.setItem("compl"+this.props.index, JSON.stringify(4));
+        };
+
+        rendIsComplete(){
+            let nowDateD = new Date();
+            if(typeof nowDate[this.props.index] == 'undefined'){
+                nowDate[this.props.index] = nowDateD.getFullYear()+', '+nowDateD.getMonth()+', '+nowDateD.getDate()+' в '+nowDateD.getHours()+':'+nowDateD.getMinutes();
+                localStorage.setItem('nowDate', JSON.stringify(nowDate));
+            };
+            if (this.dateProof() && date[this.props.index] != '') {
+                return (
+                    <div className="boxProsroch" id="box">
+                        <div className="text">{this.props.children}</div>
+                        <div onClick={this.remove} className="btn red">Удалить</div>
+                        <div onClick={this.detail} className="btn light">Подробности</div>
+                        <div className="text">{'Задание выполнено, '+nowDate[this.props.index]+' но просрочено'}</div>
+                    </div>
+                );
+            } else {
+                return (
+                    <div className="box" id="box">
+                        <div className="text">{this.props.children}</div>
+                        <div onClick={this.remove} className="btn red">Удалить</div>
+                        <div onClick={this.detail} className="btn light">Подробности</div>
+                        <div className="text">{'Задание выполнено '+nowDate[this.props.index]}</div>
+                    </div>
+                );
+            }
+        };
+
+        rendNorm(){ if(localStorage.getItem('compl'+this.props.index) != 0 && localStorage.getItem('compl'+this.props.index) != null) this.state.compl=true;
+            if(this.state.compl){return this.rendIsComplete();}
+            else if(this.dateProof() && date[this.props.index]!=''){
+                return(
+                    <div className="boxProsroch" id="box">
+                        <div className="text">{this.props.children}</div>
+                        <div onClick={this.edit} className="btn light">Редактировать</div>
+                        <div onClick={this.remove} className="btn red">Удалить</div>
+                        <div onClick={this.detail} className="btn light">Подробности</div>
+                        <div onClick={this.Iscomplete} className="btn red">Выполнено</div>
+                    </div>
+                );
+            }else{
+                return(
+                    <div className="box" id="box">
+                        <div className="text">{this.props.children}</div>
+                        <div onClick={this.edit} className="btn light">Редактировать</div>
+                        <div onClick={this.remove} className="btn red">Удалить</div>
+                        <div onClick={this.detail} className="btn light">Подробности</div>
+                        <div onClick={this.Iscomplete} className="btn red">Выполнено</div>
+                    </div>
+                );
+            }
+
+        };
+        rendEdit(){
+
+            return(
+                <div className="box">
+                  <textarea ref="newTxt"></textarea>
+                  <textarea ref="newTxt2"></textarea>
+                    <form action="#" id="form" name="form">
+                    <p><input type="radio" ref="rad0" name="gender" value="0" onClick={this.state.check = 0}/>обычная</p>
+                    <p><input type="radio" ref="rad1" name="gender" value="1" onClick={this.state.check = 1}/>важная</p>
+                    <p><input type="radio" ref="rad2" name="gender" value="2" onClick={this.state.check = 2}/>очень важная</p>
+                </form>
+                    <form action="#" id="form1" name="form1">
+                    <input ref="date" type="date" name="created" />
+                    <input ref="time" type="time" name="created" />
+                    </form>
+                  <button onClick={this.save} className="btn success">Сохранить</button>
+                </div>
+            );
+        };
+        rendDetail(){
+
+            if(this.dateProof() && date[this.props.index]!=''){
+                datefor[this.props.index]='задача просрочена c ' + date[this.props.index]+' '+time[this.props.index];
+                timefor[this.props.index]='';
+            }else{
+                datefor[this.props.index]= date[this.props.index];
+                timefor[this.props.index]=time[this.props.index];
+            };
+            return(
+                <div className="box">
+                    <h3>Название:</h3>
+                    <div className="text">{this.props.children}</div>
+                    <h3>Описание:</h3>
+                    <div className="textdetail">{txtdetail[this.props.index]}</div>
+                    <div className="textdetail">{this.isChecked()}</div>
+                    <div className="textdetail">{datefor[this.props.index]} {timefor[this.props.index]}</div>
+                    <button onClick={this.backToMenu} className="btn success">Сохранить</button>
+                </div>
+            );
+        }
+        render(){
+            if (this.state.edit) {
+                return this.rendEdit ();
+            } else if(this.state.detail){
+                return this.rendDetail();
+            }else{
+                return this.rendNorm ();
+            }
+        };
+    };
+    class Field extends React.Component {
+        constructor(props) {
+            super(props);
+            if(localStorage.getItem('tasks') !== null){
+                this.state = {
+                tasks: JSON.parse(localStorage.getItem("tasks"))
+            };
+            } else{
+                this.state = {
+                    tasks: []
+                };
+            }
+
+        };
+        add=(text)=>{
+            let arr = this.state.tasks;
+            arr.push(text);
+            this.setState({tasks: arr});
+
+        };
+        deleteBlock =(i)=>{
+            let arr = this.state.tasks;
+            txtdetail.splice(i,1);
+            date.splice(i,1);
+            time.splice(i,1);
+            arr.splice(i,1);
+            nowDate.splice(i,1);
+            this.setState({tasks: arr});
+            localStorage.setItem('compl'+i, JSON.stringify(0));
+        };
+        updateText=(text, txt, dat, t, i)=>{
+          let arr = this.state.tasks;
+          arr[i]=text;
+          txtdetail[i]=txt;
+          date[i]=dat;
+          time[i]=t;
+          this.setState({tasks: arr});
+        };
+        eachTask = (item, i) =>{
+            return (
+                <Task key={i} index={i} update={this.updateText} deleteBlock={this.deleteBlock}>
+                    {item}
+                    </Task>);
+        };
+        render() {
+            localStorage.setItem("tasks", JSON.stringify(this.state.tasks));
+            localStorage.setItem("detail", JSON.stringify(txtdetail));
+            localStorage.setItem("date", JSON.stringify(date));
+            localStorage.setItem("time", JSON.stringify(time));
+            return (
+                <div className="field">
+                    <button onClick={this.add.bind(null, 'Название')} className="btn new">Добавить</button>
+                    {
+                        this.state.tasks.map(this.eachTask)
+                    }
+                </div>
+            );
+        }
+    }
+    const app = document.getElementById("program");
+    ReactDOM.render (<Field/>, app);
+</script>﻿
+
+
+</body>
+</html>
